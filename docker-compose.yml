@@ -1,0 +1,55 @@
+version: '3'
+services:
+
+  mongo:
+    image: mongo
+    container_name: mern-ci-cd_mongo
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - mern-ci-cd_default
+
+  backend:
+    build: ./server
+    container_name: backend
+    ports:
+      - '5000:5000'
+    volumes:
+      - ./server:/app
+    depends_on:
+      - mongo
+    networks:
+      - mern-ci-cd_default
+
+  frontend:
+    build: ./client
+    container_name: frontend
+    ports:
+      - '3000:3000' 
+    volumes:
+      - ./client:/app
+      - /app/node_modules    
+    depends_on:
+      - backend
+    networks:
+      - mern-ci-cd_default
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    user: root
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - jenkins_home:/var/jenkins_home
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+
+volumes:
+  mongo-data:
+  jenkins_home:
+networks:
+  mern-ci-cd_default:
+    external: true
